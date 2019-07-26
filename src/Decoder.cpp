@@ -12,22 +12,59 @@ Decoder::Decoder() {
 int Decoder::Init(DecoderParameters& input) {
 	state = input;
 	int sts;
-
+	CUresult err;
+	CUdevice device;
+	CUcontext cuda_ctx = NULL;
+	CUcontext dummy;
 	decoderContext = avcodec_alloc_context3(state.parser->getStreamHandle()->codec->codec);
+	
 	sts = avcodec_parameters_to_context(decoderContext, state.parser->getStreamHandle()->codecpar);
 	CHECK_STATUS(sts);
-	sts = cudaFree(0);
+	// sts = cudaFree(0);
 	CHECK_STATUS(sts);
+	
 	//CUDA device initialization
 	deviceReference = av_hwdevice_ctx_alloc(av_hwdevice_find_type_by_name("cuda"));
+
+	err = cuInit(0);
+        if (err != CUDA_SUCCESS) {
+            av_log(NULL, AV_LOG_ERROR, "Could not initialize the CUDA driver API\n");
+            // ret = AVERROR_UNKNOWN;
+            // goto error;
+        }
+
+        err = cuDeviceGet(&device, 2); ///TODO: Make device index configurable
+        if (err != CUDA_SUCCESS) {
+            av_log(NULL, AV_LOG_ERROR, "Could not get the device number %d\n", 0);
+            // ret = AVERROR_UNKNOWN;
+            // goto error;
+        }
+	
+	err = cuCtxCreate(&cuda_ctx, CU_CTX_SCHED_BLOCKING_SYNC, device);
+        if (err != CUDA_SUCCESS) {
+            av_log(NULL, AV_LOG_ERROR, "Error creating a CUDA context\n");
+            // ret = AVERROR_UNKNOWN;
+            // goto error;
+        }
+	
 	AVHWDeviceContext* deviceContext = (AVHWDeviceContext*) deviceReference->data;
 	AVCUDADeviceContext *CUDAContext = (AVCUDADeviceContext*) deviceContext->hwctx;
-
 	//Assign runtime CUDA context to ffmpeg decoder
-	sts = cuCtxGetCurrent(&CUDAContext->cuda_ctx);
+	
+	CUDAContext->cuda_ctx = cuda_ctx;
 	CHECK_STATUS(CUDAContext->cuda_ctx == nullptr);
 	CHECK_STATUS(sts);
+
+	err = cuCtxPopCurrent(&dummy);
+        if (err != CUDA_SUCCESS) {
+            av_log(NULL, AV_LOG_ERROR, "cuCtxPopCurrent failed\n");
+            // ret = AVERROR_UNKNOWN;
+            // goto error;
+        }
+
+
 	sts = av_hwdevice_ctx_init(deviceReference);
+	
 	CHECK_STATUS(sts);
 	decoderContext->hw_device_ctx = av_buffer_ref(deviceReference);
 	sts = avcodec_open2(decoderContext, state.parser->getStreamHandle()->codec->codec, NULL);

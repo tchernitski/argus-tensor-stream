@@ -21,7 +21,7 @@ int TensorStream::initPipeline(std::string inputFile) {
 	START_LOG_FUNCTION(std::string("Initializing() "));
 	/*avoiding Tensor CUDA lazy initializing for further context attaching*/
 	START_LOG_BLOCK(std::string("Tensor CUDA init"));
-	at::Tensor gt_target = at::empty({ 1 }, at::CUDA(at::kByte));
+	// at::Tensor gt_target = at::empty({ 1 }, at::CUDA(at::kByte));
 	END_LOG_BLOCK(std::string("Tensor CUDA init"));
 	parser = std::make_shared<Parser>();
 	decoder = std::make_shared<Decoder>();
@@ -165,7 +165,7 @@ std::tuple<at::Tensor, int> TensorStream::getFrame(std::string consumerName, int
 	int indexFrame = VREADER_REPEAT;
 	START_LOG_BLOCK(std::string("decoder->GetFrame"));
 	while (indexFrame == VREADER_REPEAT) {
-		indexFrame = decoder->GetFrame(index, consumerName, decoded);
+		// indexFrame = decoder->GetFrame(index, consumerName, decoded);
 	}
 	END_LOG_BLOCK(std::string("decoder->GetFrame"));
 	START_LOG_BLOCK(std::string("vpp->Convert"));
@@ -175,7 +175,7 @@ std::tuple<at::Tensor, int> TensorStream::getFrame(std::string consumerName, int
 	CHECK_STATUS_THROW(sts);
 	END_LOG_BLOCK(std::string("vpp->Convert"));
 	START_LOG_BLOCK(std::string("tensor->ConvertFromBlob"));
-	outputTensor = torch::from_blob(processedFrame->opaque, { processedFrame->height, processedFrame->width, processedFrame->channels }, torch::CUDA(at::kByte));
+	// outputTensor = torch::from_blob(processedFrame->opaque, { processedFrame->height, processedFrame->width, processedFrame->channels }, torch::CUDA(at::kByte));
 	outputTuple = std::make_tuple(outputTensor, indexFrame);
 	END_LOG_BLOCK(std::string("tensor->ConvertFromBlob"));
 	/*

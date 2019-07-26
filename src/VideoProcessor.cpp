@@ -40,11 +40,12 @@ int VideoProcessor::Init(bool _enableDumps) {
 	enableDumps = _enableDumps;
 
 	cudaGetDeviceProperties(&prop, 0);
-	for (int i = 0; i < maxConsumers; i++) {
-		cudaStream_t stream;
-		cudaStreamCreate(&stream);
-		streamArr.push_back(std::make_pair(std::string("empty"), stream));
-	}
+	// for (int i = 0; i < maxConsumers; i++) {
+	// 	cudaStream_t stream;
+	// 	cudaStreamCreate(&stream);
+	// 	streamArr.push_back(std::make_pair(std::string("empty"), stream));
+	// }
+
 	
 	isClosed = false;
 	return VREADER_OK;
@@ -56,10 +57,10 @@ int VideoProcessor::Convert(AVFrame* input, AVFrame* output, VPPParameters& form
 	*/
 	cudaStream_t stream;
 	int sts = VREADER_OK;
-	{
-		std::unique_lock<std::mutex> locker(streamSync);
-		stream = findFree<cudaStream_t>(consumerName, streamArr);
-	}
+	// {
+	// 	std::unique_lock<std::mutex> locker(streamSync);
+	// 	stream = findFree<cudaStream_t>(consumerName, streamArr);
+	// }
 
 	output->width = format.width;
 	output->height = format.height;
@@ -91,11 +92,11 @@ int VideoProcessor::Convert(AVFrame* input, AVFrame* output, VPPParameters& form
 			output->format = AV_PIX_FMT_BGR24;
 			//this field is used only for audio so let's write number of planes there
 			output->channels = 3;
-			if (resize)
-				sts = NV12ToBGR24(output, output, prop.maxThreadsPerBlock, &stream);
-			else
-				sts = NV12ToBGR24(input, output, prop.maxThreadsPerBlock, &stream);
-			CHECK_STATUS(sts);
+			// if (resize)
+			// 	sts = NV12ToBGR24(output, output, prop.maxThreadsPerBlock, &stream);
+			// else
+			// 	sts = NV12ToBGR24(input, output, prop.maxThreadsPerBlock, &stream);
+			// CHECK_STATUS(sts);
 			break;
 		}
 	case (Y800):

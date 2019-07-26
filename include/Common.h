@@ -152,7 +152,7 @@ extern std::mutex logsMutex;
 		} \
 	}
 	
-const int maxConsumers = 5;
+const int maxConsumers = 1;
 const int frameRateConstraints = 120;
 
 template <class T>
